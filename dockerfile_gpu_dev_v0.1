@@ -1,0 +1,103 @@
+BEL maintainer "Fang Fang <fangfang729@gmail.com>"
+
+#----------------------------------------------------------------
+# INSTALL LINUX DEPENDENCIES
+#----------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        cmake \
+        git \
+        wget \
+        libatlas-base-dev \
+        libboost-all-dev \
+        libgflags-dev \
+        libgoogle-glog-dev \
+        libhdf5-serial-dev \
+        libleveldb-dev \
+        protobuf-compiler \
+        python-dev \
+        python3-dev \
+        python-numpy \
+        python3-numpy \
+        python-pip \
+        python3-pip \
+        python-setuptools \
+        python3-setuptools \
+        python-scipy \
+        python3-scipy \
+	    curl \
+	    libcupti-dev \
+	    python-tk \
+	    python3-tk \
+	    screen \
+	    tmux \
+	    tree \
+	    unzip \
+        vim \
+	    wget \
+	    zsh \
+        libopenblas-dev \
+        swig \
+        && \
+    rm -rf /var/lib/apt/lists/*
+
+
+#----------------------------------------------------------------
+# SETUP VIM
+#----------------------------------------------------------------
+RUN cd ~ && git clone https://github.com/FangMath/vim-setup-fang.git && \
+    mv vim-setup-fang/.vimrc ~/.vimrc && rm -rf vim-setup-fang/.git* vim-setup-fang/README.md && mv vim-setup-fang ~/.vim
+RUN echo 'alias ll="ls -lah"' >> ~/.bashrc
+
+
+#----------------------------------------------------------------
+# INSTALL Conda
+#----------------------------------------------------------------
+RUN apt-get update && apt-get install -y curl
+
+# Install miniconda to /miniconda
+RUN curl -LO http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
+RUN bash Miniconda-latest-Linux-x86_64.sh -p /miniconda -b
+RUN rm Miniconda-latest-Linux-x86_64.sh
+ENV PATH=/miniconda/bin:${PATH}
+RUN conda install --quiet --yes python=3.6
+RUN conda install faiss-cpu -c pytorch
+RUN conda install ipykernel \
+	tqdm \
+	scikit-learn \
+	pandas \
+    Flask \
+    mongodb
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir --ignore-installed --upgrade \
+	jieba 
+
+
+#----------------------------------------------------------------
+# INSTALL StarSpace, FASTTEXT
+##----------------------------------------------------------------
+RUN wget https://dl.bintray.com/boostorg/release/1.63.0/source/boost_1_63_0.zip && \
+    unzip boost_1_63_0.zip && \ 
+    mv boost_1_63_0 /usr/local/bin
+
+RUN git clone https://github.com/facebookresearch/Starspace.git && \
+    cd Starspace && \
+    make
+
+RUN git clone https://github.com/facebookresearch/fastText.git && \
+    cd fastText && \
+    pip install .
+
+ENV PYTHONPATH=${PYTHONPATH}:/kirinBrain/sentence_sim
+#----------------------------------------------------------------
+# EXPOSE PORTS
+#----------------------------------------------------------------
+# TensorBoard
+EXPOSE 6006 
+# IPython
+EXPOSE 8888 
+# DIGITS
+EXPOSE 5000 
+
+WORKDIR /workspace
+CMD ["/bin/bash"]
